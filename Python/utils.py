@@ -8,6 +8,6 @@ def get_puzzle_input_fpath(day: int) -> Path:
 
 
 def get_puzzle_lines(day: int) -> Iterator[str]:
-    with open(get_puzzle_input_fpath(1)) as data:
+    with open(get_puzzle_input_fpath(day)) as data:
         for line in data:
             yield line.strip()
