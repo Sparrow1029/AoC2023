@@ -1,3 +1,4 @@
+pub mod grid;
 use std::{
     fs::{read_to_string, File},
     io::{BufRead, BufReader, Lines},
