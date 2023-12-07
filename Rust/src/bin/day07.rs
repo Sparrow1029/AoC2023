@@ -45,16 +45,10 @@ fn high_card_frequency(x: (usize, &usize), y: (usize, &usize)) -> Ordering {
     cntb.cmp(&cnta)
 }
 
-#[allow(dead_code)]
-fn card_frequency(x: (usize, &usize), y: (usize, &usize)) -> Ordering {
-    let (cnta, _) = x;
-    let (cntb, _) = y;
-    cntb.cmp(&cnta)
-}
-
 fn get_hand_score(cards: &[usize], joker: bool) -> usize {
     let initial_counts: Vec<(usize, &usize)> = cards
         .iter()
+        // don't count jokers until we know their actual card value
         .filter(|c| **c != 0usize)
         .sorted()
         .dedup_with_count()
@@ -72,9 +66,7 @@ fn get_hand_score(cards: &[usize], joker: bool) -> usize {
         // replace zeroes with that card, redo the count
         let most_frequent = initial_counts[0].1;
         cards.iter().enumerate().for_each(|(i, card_val)| {
-            new_cards[i] = if *card_val == 0
-            /* joker */
-            {
+            new_cards[i] = if *card_val == 0 {
                 *most_frequent
             } else {
                 *card_val
@@ -89,10 +81,10 @@ fn get_hand_score(cards: &[usize], joker: bool) -> usize {
     } else {
         initial_counts
     };
-    get_kind(&counts)
+    get_rank(&counts)
 }
 
-fn get_kind(counts: &[(usize, &usize)]) -> usize {
+fn get_rank(counts: &[(usize, &usize)]) -> usize {
     match counts.len() {
         1 => 7, // Five of a kind
         2 => match counts[0].0 {
@@ -137,8 +129,11 @@ fn main() {
     println!("Part 2: {}", solve(&input, true))
 }
 
-#[allow(dead_code)]
-const SAMPLE_INPUT: &str = "\
+#[cfg(test)]
+mod test {
+    use crate::{get_hand_score, parse_str, solve};
+
+    const SAMPLE_INPUT: &str = "\
 32T3K 765
 T55J5 684
 KK677 28
@@ -146,25 +141,26 @@ KTJJT 220
 QQQJA 483
 ";
 
-#[test]
-fn test_solve_part1_with_sample() {
-    let ans = solve(SAMPLE_INPUT, false);
-    assert_eq!(ans, 6440);
-}
+    #[test]
+    fn test_solve_part1_with_sample() {
+        let ans = solve(SAMPLE_INPUT, false);
+        assert_eq!(ans, 6440);
+    }
 
-#[test]
-fn test_solve_part2_with_sample() {
-    let ans = solve(SAMPLE_INPUT, true);
-    assert_eq!(ans, 5905);
-}
+    #[test]
+    fn test_solve_part2_with_sample() {
+        let ans = solve(SAMPLE_INPUT, true);
+        assert_eq!(ans, 5905);
+    }
 
-#[test]
-fn test_edge_cases() {
-    let joker = true;
-    let hand1: ([usize; 5], usize) = parse_str("J42JJ 42", joker);
-    // should be 4 of a kind
-    assert_eq!(6, get_hand_score(&hand1.0, joker));
-    // should be 5 of a kind
-    let hand2: ([usize; 5], usize) = parse_str("JJJJJ 42", joker);
-    assert_eq!(7, get_hand_score(&hand2.0, joker));
+    #[test]
+    fn test_edge_cases() {
+        let joker = true;
+        let hand1: ([usize; 5], usize) = parse_str("J42JJ 42", joker);
+        // should be 4 of a kind
+        assert_eq!(6, get_hand_score(&hand1.0, joker));
+        // should be 5 of a kind
+        let hand2: ([usize; 5], usize) = parse_str("JJJJJ 42", joker);
+        assert_eq!(7, get_hand_score(&hand2.0, joker));
+    }
 }
