@@ -4,7 +4,20 @@ use itertools::Itertools;
 use rust_aoc2023::get_puzzle_input_string;
 
 const DAY_07: u32 = 7;
-type Hand = ([usize; 5], usize);
+
+type Cards = [usize; 5];
+type Bid = usize;
+type Hand = (Cards, Bid);
+type Count<'a> = (usize, &'a usize);
+
+// Rank values for readability
+const FIVE_OF_A_KIND: usize = 7;
+const FOUR_OF_A_KIND: usize = 6;
+const FULL_HOUSE: usize = 5;
+const THREE_OF_A_KIND: usize = 4;
+const TWO_PAIR: usize = 3;
+const ONE_PAIR: usize = 2;
+const HIGH_CARD: usize = 1;
 
 fn parse_str<const N: usize>(input: &str, joker: bool) -> ([usize; N], usize) {
     let mut cards = [0usize; N];
@@ -37,25 +50,25 @@ fn parse_str<const N: usize>(input: &str, joker: bool) -> ([usize; N], usize) {
     (cards, split[1].parse().unwrap())
 }
 
-fn high_card_frequency(x: (usize, &usize), y: (usize, &usize)) -> Ordering {
-    let ((cnta, a), (cntb, b)) = (x, y);
-    if cnta == cntb {
+fn high_card_frequency(x: Count, y: Count) -> Ordering {
+    let ((cnt_a, a), (cnt_b, b)) = (x, y);
+    if cnt_a == cnt_b {
         return b.cmp(a);
     }
-    cntb.cmp(&cnta)
+    cnt_b.cmp(&cnt_a)
 }
 
-fn get_hand_score(cards: &[usize], joker: bool) -> usize {
-    let initial_counts: Vec<(usize, &usize)> = cards
+fn get_hand_score(cards: &Cards, joker: bool) -> usize {
+    let initial_counts: Vec<Count> = cards
         .iter()
         // don't count jokers until we know their actual card value
-        .filter(|c| **c != 0usize)
+        .filter(|c| *c != &0usize)
         .sorted()
         .dedup_with_count()
-        // make sure in the case of a tie (two pair), we get the higher value cards
+        // make sure in the case of a tie (two pair), we get the higher card value
         .sorted_by(|a, b| high_card_frequency(*a, *b))
         .collect();
-    let mut new_cards: [usize; 5] = [0; 5];
+    let mut new_cards: Cards = [0; 5];
     if initial_counts.is_empty() {
         // All jokers, 5 of a kind
         return 7;
@@ -63,7 +76,7 @@ fn get_hand_score(cards: &[usize], joker: bool) -> usize {
     let counts = if joker && cards.contains(&0) {
         // Check for zeroes (jokers)
         // if there are any, get most frequently occuring card
-        // replace zeroes with that card, redo the count
+        // replace zeroes with that card, redo the counts
         let most_frequent = initial_counts[0].1;
         cards.iter().enumerate().for_each(|(i, card_val)| {
             new_cards[i] = if *card_val == 0 {
@@ -84,23 +97,25 @@ fn get_hand_score(cards: &[usize], joker: bool) -> usize {
     get_rank(&counts)
 }
 
-fn get_rank(counts: &[(usize, &usize)]) -> usize {
-    match counts.len() {
-        1 => 7, // Five of a kind
-        2 => match counts[0].0 {
-            4 => 6, // Four of a kind
-            3 => 5, // Full house
+fn get_rank(counts: &[Count]) -> usize {
+    let top_card_count = counts[0].0;
+    let unique_cards = counts.len();
+    match unique_cards {
+        1 => FIVE_OF_A_KIND,
+        2 => match top_card_count {
+            4 => FOUR_OF_A_KIND,
+            3 => FULL_HOUSE,
             _ => unreachable!(),
         },
         3 => {
-            if counts[0].0 == 3 {
-                4 // Three of a kind
+            if top_card_count == 3 {
+                THREE_OF_A_KIND
             } else {
-                3 // Two pair
+                TWO_PAIR
             }
         }
-        4 => 2, // One pair
-        5 => 1, // High card
+        4 => ONE_PAIR,
+        5 => HIGH_CARD,
         _ => unreachable!(),
     }
 }
