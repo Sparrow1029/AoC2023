@@ -22,3 +22,21 @@ pub fn get_puzzle_input_string(day: u32) -> Result<String> {
     let data = read_to_string(filename)?;
     Ok(data)
 }
+
+/// Greatest common divisor function
+pub fn gcd(a: u64, b: u64) -> u64 {
+    if b == 0 {
+        return a;
+    }
+    gcd(b, a % b)
+}
+
+/// Least common multiple for array of numbers
+pub fn lcm(nums: &[u64]) -> u64 {
+    if nums.len() == 1 {
+        return nums[0];
+    }
+    let a = nums[0];
+    let b = lcm(&nums[1..]);
+    a * b / gcd(a, b)
+}
