@@ -9,7 +9,7 @@ use std::collections::HashSet;
 const DAY: u32 = 3;
 type Grid = Grid2D<GridCell>;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 enum GridCell {
     Number(u16),
     Symbol(char),
