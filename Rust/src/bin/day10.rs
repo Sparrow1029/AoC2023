@@ -41,14 +41,14 @@ impl From<char> for Pipe {
 }
 
 fn parse_pipe_grid(input: &str) -> Grid2D<Pipe> {
-    let width = input.lines().peekable().peek().unwrap_or(&"").len() as i32;
+    let width = input.lines().peekable().peek().unwrap_or(&"").len() as i64;
     let cells: Vec<Pipe> = input
         .lines()
         .flat_map(|line| line.chars().map(Pipe::from))
         .collect();
     Grid2D {
         width,
-        height: cells.len() as i32 / width,
+        height: cells.len() as i64 / width,
         cells,
     }
 }

@@ -9,7 +9,7 @@ use std::collections::HashSet;
 const DAY: u32 = 3;
 type Grid = Grid2D<GridCell>;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum GridCell {
     Number(u16),
     Symbol(char),
@@ -32,8 +32,8 @@ fn parse_input(input: String) -> Result<Grid> {
         }
     }
     Ok(Grid2D {
-        width: w as i32,
-        height: h as i32,
+        width: w as i64,
+        height: h as i64,
         cells,
     })
 }
