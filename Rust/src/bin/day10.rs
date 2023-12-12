@@ -111,19 +111,20 @@ fn follow_loop(
     grid: &Grid2D<Pipe>,
     start_pt: Point,
     direction: Direction,
-    loop_positions: &mut Vec<Point>,
+    loop_vertices: &mut Vec<Point>,
 ) -> usize {
     let mut count = 1;
     let (mut next_pt, mut next_dir) = (start_pt, direction);
     while let Some((pos, dir)) = get_next_pos(grid, next_pt, next_dir) {
         next_pt = pos;
-        loop_positions.push(next_pt);
+        loop_vertices.push(next_pt);
         next_dir = dir;
         count += 1;
     }
     count
 }
 
+#[allow(dead_code)]
 fn print_grid(grid: &Grid2D<Pipe>, color_pipe_positions: &[Point]) {
     let mut output = String::new();
     for y in 0..grid.height {
@@ -159,20 +160,58 @@ fn print_grid(grid: &Grid2D<Pipe>, color_pipe_positions: &[Point]) {
     println!("{output}");
 }
 
+fn shoelace_area(vertices: Vec<Point>) -> i64 {
+    let mut vertices = vertices.clone();
+    // add first point to end to ensure first point is considered against last point
+    vertices.push(*vertices.first().unwrap());
+    vertices
+        .as_slice()
+        .windows(2)
+        .map(|pair| {
+            let (pt1, pt2) = (pair[0], pair[1]);
+            pt1.x * pt2.y - pt1.y * pt2.x
+        })
+        .sum::<i64>()
+        .abs()
+        / 2
+}
+
+fn part2(vertices: Vec<Point>) -> i64 {
+    // For part two, stolen algorithms from Reddit:
+    // Pick's theorem (https://en.wikipedia.org/wiki/Pick%27s_theorem)
+    // loop_area = interior_points_count + (boundary_points_count / 2) - 1
+    //
+    //  Part 2 answer is interior_points_count
+    // transforming Pick's formula:
+    // interior_points_count = loopArea - (boundary_points_count / 2) + 1
+    //
+    // boundary_points_count is length of loop
+    //
+    // loop_area can by calculated using Shoelace formula (https://en.wikipedia.org/wiki/Shoelace_formula):
+    // vertices = (x1, y1) (x2, y2) (x3, y3) ...
+    // 2 * loop_area = x1 * y2 - y1 * x2 + x2 * y3 - x3 * y2 + ...
+    // loop_area = result / 2
+
+    // print_grid(&grid, &loop_vertices);
+    let vertices_len = vertices.len() as i64;
+    let loop_area = shoelace_area(vertices);
+    loop_area - vertices_len / 2 + 1
+}
+
 fn main() {
     let input = get_puzzle_input_string(10).expect("I/O Error");
-    // print_grid(&input);
     let grid = parse_pipe_grid(&input);
     let start_pt = grid.find_item_coord(&Pipe::Start).unwrap();
+    // Laziness -- customized to my puzzle input
     let init_direction = Direction::West;
-    let mut loop_positions = vec![start_pt];
+    // Vec to contain vertices as they are found
+    let mut loop_vertices = vec![start_pt];
 
     println!(
         "Part 1: {}",
-        follow_loop(&grid, start_pt, init_direction, &mut loop_positions) / 2
+        follow_loop(&grid, start_pt, init_direction, &mut loop_vertices) / 2
     );
-    // For part two, I just print the grid and manually count hehe
-    print_grid(&grid, &loop_positions);
+    println!("Part 2: {}", part2(loop_vertices));
 }
 
 #[cfg(test)]
@@ -186,19 +225,7 @@ SJ.L7
 |F--J
 LJ...
 ";
-    #[test]
-    fn test_part1() {
-        let grid = parse_pipe_grid(SAMPLE);
-        let mut positions = vec![];
-        print_grid(&grid, &vec![]);
-        let start_pt = grid.find_item_coord(&Pipe::Start).unwrap();
-        let init_dir = Direction::South;
-        assert_eq!(follow_loop(&grid, start_pt, init_dir, &mut positions), 16);
-    }
-
-    #[test]
-    fn test_fill() {
-        let input = "\
+    const LARGE_SAMPLE: &str = "\
 .F----7F7F7F7F-7....
 .|F--7||||||||FJ....
 .||.FJ||||||||L7....
@@ -209,10 +236,53 @@ L--J.L7...LJS7F-7L7.
 .....|FJLJ|FJ|F7|.LJ
 ....FJL-7.||.||||...
 ....L---J.LJ.LJLJ...";
-        let grid = parse_pipe_grid(input);
+
+    const ANOTHER_SAMPLE: &str = "\
+FF7FSF7F7F7F7F7F---7
+L|LJ||||||||||||F--J
+FL-7LJLJ||||||LJL-77
+F--JF--7||LJLJ7F7FJ-
+L---JF-JLJ.||-FJLJJ7
+|F|F-JF---7F7-L7L|7|
+|FFJF7L7F-JF7|JL---7
+7-L-JL7||F7|L7F-7F7|
+L.L7LFJ|||||FJL7||LJ
+L7JLJL-JLJLJL--JLJ.L";
+    #[test]
+    fn test_part1() {
+        let grid = parse_pipe_grid(SAMPLE);
+        let mut positions = vec![];
+        let start_pt = grid.find_item_coord(&Pipe::Start).unwrap();
+        let init_dir = Direction::South;
+        assert_eq!(follow_loop(&grid, start_pt, init_dir, &mut positions), 16);
+    }
+
+    #[test]
+    fn test_color() {
+        let grid = parse_pipe_grid(LARGE_SAMPLE);
         let mut positions: Vec<Point> = vec![(12, 4).into()];
         let start_pt: Point = Point::new(12, 4);
         let _ = follow_loop(&grid, start_pt, Direction::East, &mut positions);
         print_grid(&grid, &positions);
+    }
+
+    #[test]
+    fn test_part2() {
+        let grid = parse_pipe_grid(LARGE_SAMPLE);
+        let start_pt = grid.find_item_coord(&Pipe::Start).unwrap();
+        let mut positions = vec![start_pt];
+        let init_dir = Direction::East;
+        _ = follow_loop(&grid, start_pt, init_dir, &mut positions);
+        assert_eq!(part2(positions), 8);
+    }
+
+    #[test]
+    fn test_part2_again() {
+        let grid = parse_pipe_grid(ANOTHER_SAMPLE);
+        let start_pt = grid.find_item_coord(&Pipe::Start).unwrap();
+        let mut positions = vec![start_pt];
+        let init_dir = Direction::West;
+        _ = follow_loop(&grid, start_pt, init_dir, &mut positions);
+        assert_eq!(part2(positions), 10);
     }
 }
