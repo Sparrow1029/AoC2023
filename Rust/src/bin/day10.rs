@@ -5,7 +5,7 @@ use rust_aoc2023::{
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Direction {
+pub enum Direction {
     North,
     South,
     East,

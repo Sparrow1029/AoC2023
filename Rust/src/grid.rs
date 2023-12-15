@@ -85,7 +85,7 @@ impl Point {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Grid2D<T> {
     pub width: i64,
     pub height: i64,
@@ -217,6 +217,11 @@ where
         }
         self.height += 1;
         Ok(())
+    }
+
+    pub fn set(&mut self, pt: Point, item: T) {
+        let idx = self.pt_to_idx(pt);
+        self.cells[idx] = item;
     }
 }
 
