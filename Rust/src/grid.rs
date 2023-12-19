@@ -1,7 +1,7 @@
 use crate::Result;
 use std::{
     fmt::{Debug, Display},
-    ops::{Add, Sub},
+    ops::{Add, AddAssign, Sub},
 };
 
 const NEIGHBORS_4: [Point; 4] = [
@@ -57,6 +57,13 @@ impl Add for Point {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
         }
+    }
+}
+
+impl AddAssign for Point {
+    fn add_assign(&mut self, rhs: Self) {
+        self.x = self.x + rhs.x;
+        self.y = self.y + rhs.y;
     }
 }
 
