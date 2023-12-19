@@ -191,11 +191,13 @@ fn run_laser_simulation(grid: &MirrorGrid, start_pos: Point, start_direction: Di
     deduplicated.len()
 }
 
-/// Determine how m
+/// Determine how many tiles are energized with one beam starting from top left heading right.
 fn part_1(grid: &MirrorGrid) -> usize {
     run_laser_simulation(grid, Point::new(0, 0), Direction::Right)
 }
 
+/// Determine the maximum number of tiles energized for any beam heading into the grid from any x
+/// or y position.
 fn part_2(grid: &MirrorGrid) -> usize {
     let mut energized = vec![];
     for x in 0..grid.width {
