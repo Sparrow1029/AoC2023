@@ -1,10 +1,7 @@
 use std::{
     collections::HashSet,
     ops::{Deref, DerefMut},
-    sync::{
-        mpsc::{channel, Sender},
-        Arc, Mutex,
-    },
+    sync::{Arc, Mutex},
     thread,
 };
 
@@ -43,40 +40,42 @@ enum Tile {
 struct Laser {
     dir: Direction,
     pos: Point,
-    visited: HashSet<usize>,
 }
 
 impl Laser {
-    // fn beam(&mut self, grid: &MirrorGrid, visited: Arc<Mutex<Visited>>) {
-    fn beam(&mut self, tx: Sender<HashSet<usize>>, grid: &MirrorGrid) {
-        'outer: while let Some(tile) = grid.get_ref(self.pos) {
-            println!("At tile {tile:?} - {}", self.pos);
-            thread::sleep(std::time::Duration::from_millis(100));
-            self.visited.insert(grid.pt_to_idx(self.pos));
+    /// Move the laser beam tile by tile, turning when encountering reflecting mirrors
+    /// and splitting off a separate scoped thread when a split is encountered.
+    fn beam(&mut self, grid: &MirrorGrid, visited: Arc<Mutex<Visited>>) {
+        // `None` is returned when the current point is out of bounds
+        while let Some(tile) = grid.get_ref(self.pos) {
+            {
+                // Stop calculating when (position index, Direction) is encountered again to avoid loops
+                let mut visited = visited.lock().expect("error getting mutex lock on HashSet");
+                if !visited.insert((grid.pt_to_idx(self.pos), self.dir)) {
+                    break;
+                }
+            }
+            // Logic branches to determine new laser directions & positions
             match tile {
                 Tile::Mirror(mirror) => match mirror {
                     '\\' => match self.dir {
                         Direction::Up | Direction::Down => {
                             self.dir = self.dir.turn_left();
                             self.pos = self.pos + self.dir.into();
-                            continue 'outer;
                         }
                         Direction::Left | Direction::Right => {
                             self.dir = self.dir.turn_right();
                             self.pos = self.pos + self.dir.into();
-                            continue 'outer;
                         }
                     },
                     '/' => match self.dir {
                         Direction::Up | Direction::Down => {
                             self.dir = self.dir.turn_right();
                             self.pos = self.pos + self.dir.into();
-                            continue 'outer;
                         }
                         Direction::Left | Direction::Right => {
                             self.dir = self.dir.turn_left();
                             self.pos = self.pos + self.dir.into();
-                            continue 'outer;
                         }
                     },
                     _ => panic!("bad mirror character: {mirror}"),
@@ -86,7 +85,6 @@ impl Laser {
                         // Keep going same direction
                         Direction::Left | Direction::Right => {
                             self.pos = self.pos + self.dir.into();
-                            continue 'outer;
                         }
                         // Split off a new thread for a new laser beam
                         Direction::Up | Direction::Down => {
@@ -98,14 +96,12 @@ impl Laser {
                             let mut new_laser = Laser {
                                 dir: Direction::Right,
                                 pos: self.pos + Direction::Right.into(),
-                                visited: HashSet::new(),
                             };
-                            let tx_clone = tx.clone();
+                            let new_mutex = Arc::clone(&visited);
                             thread::scope(|s| {
-                                let t = s.spawn(move || new_laser.beam(tx_clone, grid));
+                                let t = s.spawn(move || new_laser.beam(grid, new_mutex));
                                 _ = t.join();
                             });
-                            continue 'outer;
                         }
                     },
                     '|' => match self.dir {
@@ -123,14 +119,12 @@ impl Laser {
                             let mut new_laser = Laser {
                                 dir: Direction::Up,
                                 pos: self.pos + Direction::Up.into(),
-                                visited: HashSet::new(),
                             };
-                            let tx_clone = tx.clone();
+                            let new_mutex = Arc::clone(&visited);
                             thread::scope(|s| {
-                                let t = s.spawn(move || new_laser.beam(tx_clone, grid));
+                                let t = s.spawn(move || new_laser.beam(grid, new_mutex));
                                 _ = t.join();
                             });
-                            continue 'outer;
                         }
                     },
                     _ => panic!("bad splitter character: {split}"),
@@ -140,8 +134,6 @@ impl Laser {
                 }
             }
         }
-        println!("Out of bounds!");
-        _ = tx.send(self.visited.clone());
     }
 }
 
@@ -184,38 +176,60 @@ impl From<&str> for MirrorGrid {
     }
 }
 
-fn part_1(input: &str) -> usize {
-    let grid: MirrorGrid = input.into();
-    let (tx, rx) = channel::<HashSet<usize>>();
-    let tx_cloned = tx.clone();
-    // let grid_arc = Arc::clone(&grid);
+fn run_laser_simulation(grid: &MirrorGrid, start_pos: Point, start_direction: Direction) -> usize {
     let mut laser = Laser {
-        dir: Direction::Right,
-        pos: (0, 0).into(),
-        visited: HashSet::new(),
+        dir: start_direction,
+        pos: start_pos,
     };
-    thread::scope(|s| {
-        let t = s.spawn(|| {
-            laser.beam(tx_cloned, &grid);
-        });
-        _ = t.join();
-    });
-    let mut visited: HashSet<(usize, Direction)> = HashSet::new();
+    let visited: HashSet<(usize, Direction)> = HashSet::new();
     let visited_mutex = Arc::new(Mutex::new(visited));
-    let mut all_visited: HashSet<usize> = HashSet::new();
 
-    while let Ok(set) = rx.recv() {
-        println!("we made it!");
-        all_visited.extend(set.iter());
-        // all_visited = all_visited.union(&set).copied().collect();
+    let first_clone = Arc::clone(&visited_mutex);
+    let final_clone = Arc::clone(&visited_mutex);
+
+    thread::scope(|s| {
+        s.spawn(|| {
+            laser.beam(grid, first_clone);
+        });
+    });
+    let final_visited = final_clone.lock().unwrap();
+    let deduplicated: HashSet<&usize> =
+        HashSet::from_iter(final_visited.iter().map(|(pos, _)| pos));
+    deduplicated.len()
+}
+
+fn part_1(grid: &MirrorGrid) -> usize {
+    run_laser_simulation(grid, Point::new(0, 0), Direction::Right)
+}
+
+fn part_2(grid: &MirrorGrid) -> usize {
+    let mut energized = vec![];
+    for x in 0..grid.width {
+        energized.push(thread::scope(|_| {
+            run_laser_simulation(grid, Point::new(x, 0), Direction::Down)
+        }));
+        energized.push(thread::scope(|_| {
+            run_laser_simulation(grid, Point::new(x, grid.height - 1), Direction::Up)
+        }));
     }
-    println!("Final set: {all_visited:?}");
-    all_visited.len()
+    for y in 0..grid.height {
+        energized.push(thread::scope(|_| {
+            run_laser_simulation(grid, Point::new(0, y), Direction::Right)
+        }));
+        energized.push(thread::scope(|_| {
+            run_laser_simulation(grid, Point::new(grid.width - 1, y), Direction::Left)
+        }));
+    }
+    energized.into_iter().max().unwrap()
 }
 
 fn main() {
-    let input = get_puzzle_input_string(16).expect("I/O Error");
-    println!("Part 1: {}", part_1(&input));
+    let grid: MirrorGrid = get_puzzle_input_string(16)
+        .expect("I/O Error")
+        .as_str()
+        .into();
+    println!("Part 1: {}", part_1(&grid));
+    println!("Part 2: {}", part_2(&grid));
 }
 
 #[cfg(test)]
@@ -244,6 +258,13 @@ mod test {
 
     #[test]
     fn test_part_1() {
-        part_1(SAMPLE);
+        let grid: MirrorGrid = SAMPLE.into();
+        assert_eq!(part_1(&grid), 46);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let grid: MirrorGrid = SAMPLE.into();
+        assert_eq!(part_2(&grid), 51);
     }
 }
