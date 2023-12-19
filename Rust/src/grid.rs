@@ -84,7 +84,47 @@ impl Point {
         NEIGHBORS_8.map(|n| n + *self)
     }
 }
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
 
+impl From<Direction> for Point {
+    fn from(value: Direction) -> Self {
+        match value {
+            Direction::Up => Point::new(0, -1),
+            Direction::Down => Point::new(0, 1),
+            Direction::Left => Point::new(-1, 0),
+            Direction::Right => Point::new(1, 0),
+        }
+    }
+}
+
+impl Direction {
+    pub fn turn_left(self) -> Self {
+        match self {
+            Direction::Up => Direction::Left,
+            Direction::Down => Direction::Right,
+            Direction::Left => Direction::Down,
+            Direction::Right => Direction::Up,
+        }
+    }
+
+    pub fn turn_right(self) -> Self {
+        match self {
+            Direction::Up => Direction::Right,
+            Direction::Down => Direction::Left,
+            Direction::Left => Direction::Up,
+            Direction::Right => Direction::Down,
+        }
+    }
+}
+
+/// Generic 2D grid represented by a flat array with methods to convert & find
+/// indexes into the array via (x, y) coordinates
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Grid2D<T> {
     pub width: i64,
@@ -97,7 +137,7 @@ where
     T: PartialEq + Clone + Copy,
 {
     /// Take index of usize and return a Point value (grid in bounds)
-    fn idx_to_point(&self, idx: usize) -> Option<Point> {
+    pub fn idx_to_point(&self, idx: usize) -> Option<Point> {
         if idx > self.width as usize * self.height as usize {
             return None;
         }
@@ -107,7 +147,7 @@ where
     }
 
     /// Find index in self.cells vec for _in_bounds_(!) point
-    fn pt_to_idx(&self, p: Point) -> usize {
+    pub fn pt_to_idx(&self, p: Point) -> usize {
         (p.y * self.width + p.x) as usize
     }
 

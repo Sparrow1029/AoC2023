@@ -2,40 +2,10 @@ use std::{collections::HashMap, fmt::Display};
 
 use rust_aoc2023::{
     get_puzzle_input_string,
-    grid::{Grid2D, Point},
+    grid::{Direction, Grid2D, Point},
 };
 
 type Cache = HashMap<Vec<Entity>, Vec<Entity>>;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
-impl From<Direction> for Point {
-    fn from(value: Direction) -> Self {
-        match value {
-            Direction::Up => Point::new(0, -1),
-            Direction::Down => Point::new(0, 1),
-            Direction::Left => Point::new(-1, 0),
-            Direction::Right => Point::new(1, 0),
-        }
-    }
-}
-
-impl Direction {
-    fn counter_clockwise(self) -> Self {
-        match self {
-            Direction::Up => Direction::Left,
-            Direction::Down => Direction::Right,
-            Direction::Left => Direction::Down,
-            Direction::Right => Direction::Up,
-        }
-    }
-}
 
 #[derive(Debug)]
 struct Map {
@@ -143,7 +113,7 @@ fn move_entities_cycles(map: &Map, entities: &mut Vec<Entity>, cycles: usize, ca
                 // println!();
                 cur_entities.iter_mut().enumerate().for_each(|(i, e)| {
                     e.move_while_valid(map, &positions);
-                    e.direction = e.direction.counter_clockwise();
+                    e.direction = e.direction.turn_left();
                     positions[i] = e.pos;
                 });
             }
