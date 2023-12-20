@@ -2,7 +2,8 @@ use std::{collections::HashMap, fmt::Display};
 
 use rust_aoc2023::{
     get_puzzle_input_string,
-    grid::{Direction, Grid2D, Point},
+    grid::Grid2D,
+    point::{Direction, Point},
 };
 
 type Cache = HashMap<Vec<Entity>, Vec<Entity>>;
@@ -68,11 +69,7 @@ impl Entity {
     }
 }
 
-fn clear_screen() {
-    print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
-}
-
-fn move_entities(map: &Map, entities: &mut Vec<Entity>) {
+fn move_entities(map: &Map, entities: &mut [Entity]) {
     let mut cur_positions: Vec<Point> = entities.iter().map(|c| c.pos).collect();
     for (i, e) in entities.iter_mut().enumerate() {
         e.move_while_valid(map, &cur_positions);
@@ -80,7 +77,7 @@ fn move_entities(map: &Map, entities: &mut Vec<Entity>) {
     }
 }
 
-fn sort_by_direction(entities: &mut Vec<Entity>) {
+fn sort_by_direction(entities: &mut [Entity]) {
     let dir = entities.first().unwrap().direction;
     // println!("cur dir: {dir:?}");
     match dir {
@@ -91,8 +88,8 @@ fn sort_by_direction(entities: &mut Vec<Entity>) {
     }
 }
 
-fn move_entities_cycles(map: &Map, entities: &mut Vec<Entity>, cycles: usize, cache: &mut Cache) {
-    let mut cur_entities = entities.clone();
+fn move_entities_cycles(map: &Map, entities: &mut [Entity], cycles: usize, cache: &mut Cache) {
+    let mut cur_entities = entities.to_vec();
     sort_by_direction(&mut cur_entities);
     for i in 0..cycles {
         // Check cache for this particular configuration of rocks
@@ -184,7 +181,7 @@ O.#..O.#.#
     fn test_cycle() {
         let (map, mut entities) = parse_map(SAMPLE);
         let mut cache: Cache = HashMap::new();
-        let new_entities = move_entities_cycles(&map, &mut entities, 100, &mut cache);
+        move_entities_cycles(&map, &mut entities, 100, &mut cache);
         // map.render_with_entities(&new_entities);
         // println!("cache: {cache:?}");
     }

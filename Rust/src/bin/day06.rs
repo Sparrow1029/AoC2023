@@ -1,5 +1,5 @@
 use itertools::join;
-use rust_aoc2023::{get_puzzle_input_lines, get_puzzle_input_string};
+use rust_aoc2023::get_puzzle_input_string;
 
 const DAY_06: u32 = 6;
 

@@ -1,4 +1,5 @@
 pub mod grid;
+pub mod point;
 use std::{
     fs::{read_to_string, File},
     io::{BufRead, BufReader, Lines},
@@ -39,4 +40,9 @@ pub fn lcm(nums: &[u64]) -> u64 {
     let a = nums[0];
     let b = lcm(&nums[1..]);
     a * b / gcd(a, b)
+}
+
+#[allow(dead_code)]
+fn clear_screen() {
+    print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
 }

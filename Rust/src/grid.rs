@@ -1,134 +1,6 @@
-use crate::Result;
-use std::{
-    fmt::{Debug, Display},
-    ops::{Add, AddAssign, Sub},
-};
+use std::fmt::Display;
 
-const NEIGHBORS_4: [Point; 4] = [
-    Point { x: -1, y: 0 },
-    Point { x: 0, y: -1 },
-    Point { x: 1, y: 0 },
-    Point { x: 0, y: 1 },
-];
-
-const NEIGHBORS_8: [Point; 8] = [
-    Point { x: -1, y: 0 },
-    Point { x: -1, y: -1 },
-    Point { x: 0, y: -1 },
-    Point { x: 1, y: -1 },
-    Point { x: 1, y: 0 },
-    Point { x: 1, y: 1 },
-    Point { x: 0, y: 1 },
-    Point { x: -1, y: 1 },
-];
-
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Point {
-    pub x: i64,
-    pub y: i64,
-}
-
-impl Display for Point {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({}, {})", self.x, self.y)
-    }
-}
-impl From<(i64, i64)> for Point {
-    fn from(value: (i64, i64)) -> Self {
-        let (x, y) = value;
-        Point::new(x, y)
-    }
-}
-
-impl Sub for Point {
-    type Output = Self;
-    fn sub(self, rhs: Self) -> Self::Output {
-        Point {
-            x: self.x - rhs.x,
-            y: self.y - rhs.y,
-        }
-    }
-}
-
-impl Add for Point {
-    type Output = Self;
-    fn add(self, rhs: Self) -> Self::Output {
-        Point {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-        }
-    }
-}
-
-impl AddAssign for Point {
-    fn add_assign(&mut self, rhs: Self) {
-        self.x = self.x + rhs.x;
-        self.y = self.y + rhs.y;
-    }
-}
-
-impl Point {
-    pub fn new(x: i64, y: i64) -> Self {
-        Point { x, y }
-    }
-
-    pub fn from_index(i: usize, width: i64) -> Self {
-        Point {
-            x: i as i64 % width,
-            y: i as i64 / width,
-        }
-    }
-
-    pub fn manhattan_distance(&self, other: &Point) -> i64 {
-        self.x.sub(other.x).abs() + self.y.sub(other.y).abs()
-    }
-
-    pub fn get_4_neighbors(&self) -> [Point; 4] {
-        NEIGHBORS_4.map(|n| n + *self)
-    }
-
-    pub fn get_8_neighbors(&self) -> [Point; 8] {
-        NEIGHBORS_8.map(|n| n + *self)
-    }
-}
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
-impl From<Direction> for Point {
-    fn from(value: Direction) -> Self {
-        match value {
-            Direction::Up => Point::new(0, -1),
-            Direction::Down => Point::new(0, 1),
-            Direction::Left => Point::new(-1, 0),
-            Direction::Right => Point::new(1, 0),
-        }
-    }
-}
-
-impl Direction {
-    pub fn turn_left(self) -> Self {
-        match self {
-            Direction::Up => Direction::Left,
-            Direction::Down => Direction::Right,
-            Direction::Left => Direction::Down,
-            Direction::Right => Direction::Up,
-        }
-    }
-
-    pub fn turn_right(self) -> Self {
-        match self {
-            Direction::Up => Direction::Right,
-            Direction::Down => Direction::Left,
-            Direction::Left => Direction::Up,
-            Direction::Right => Direction::Down,
-        }
-    }
-}
+use crate::{point::Point, Result};
 
 /// Generic 2D grid represented by a flat array with methods to convert & find
 /// indexes into the array via (x, y) coordinates
@@ -323,5 +195,12 @@ mod test {
         _ = grid.insert_row(3, '.');
         println!("{grid}");
         assert!(grid.get_row(3).unwrap().iter().all(|c| *c == '.'));
+    }
+
+    #[test]
+    fn test_euclid_distance() {
+        let pt1 = Point::new(-2, -1);
+        let pt2 = Point::new(3, 5);
+        assert_eq!(pt1.euclidean_distance(&pt2), 7.81)
     }
 }

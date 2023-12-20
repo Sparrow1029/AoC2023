@@ -1,9 +1,5 @@
 use self::GridCell::*;
-use rust_aoc2023::{
-    get_puzzle_input_string,
-    grid::{Grid2D, Point},
-    Result,
-};
+use rust_aoc2023::{get_puzzle_input_string, grid::Grid2D, point::Point, Result};
 use std::collections::HashSet;
 
 const DAY: u32 = 3;

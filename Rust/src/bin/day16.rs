@@ -7,27 +7,18 @@ use std::{
 
 use rust_aoc2023::{
     get_puzzle_input_string,
-    grid::{Direction, Grid2D, Point},
+    grid::Grid2D,
+    point::{Direction, Point},
 };
 
 type Visited = HashSet<(usize, Direction)>;
-
-#[derive(Debug)]
-struct GridError;
-
-impl std::fmt::Display for GridError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Error in the grid")
-    }
-}
-
-impl std::error::Error for GridError {}
 
 // newtype pattern! wrap the foreign type in a new one to get around Rust's orphan rules
 // https://doc.rust-lang.org/reference/items/implementations.html#trait-implementation-coherence
 #[derive(Debug)]
 struct MirrorGrid(Grid2D<Tile>);
 
+/// Tiles for the grid
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Tile {
     Mirror(char),
@@ -94,7 +85,7 @@ impl Laser {
                     break;
                 }
             }
-            // To determine new laser directions & positions
+            // determine new laser directions & positions
             match tile {
                 Tile::Mirror(mirror) => self.reflect_beam(mirror),
                 Tile::Splitter(splitter) => self.split_beam(splitter, grid, visited.clone()),
@@ -130,7 +121,7 @@ impl Laser {
     /// Handle splitters, which if oriented the same direction as the traveling laser, have no
     /// effect, but if perpendicular, split the beam in two.
     /// This is achieved by spinning up a new scoped thread for a beam traveling perpendicular,
-    /// and continuing the current beam in the other direction.
+    /// to the current one, and continuing the current beam in the opposite direction.
     fn split_beam(&mut self, splitter: &char, grid: &MirrorGrid, visited: Arc<Mutex<Visited>>) {
         match splitter {
             '-' => match self.dir {
@@ -196,8 +187,8 @@ fn part_1(grid: &MirrorGrid) -> usize {
     run_laser_simulation(grid, Point::new(0, 0), Direction::Right)
 }
 
-/// Determine the maximum number of tiles energized for any beam heading into the grid from any x
-/// or y position.
+/// Determine the maximum number of tiles energized for any beam heading into the grid
+/// from any x or y position.
 fn part_2(grid: &MirrorGrid) -> usize {
     let mut energized = vec![];
     for x in 0..grid.width {

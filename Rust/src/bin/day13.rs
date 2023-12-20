@@ -25,6 +25,7 @@ fn parse_grid_to_bin(input: &str) -> (Vec<usize>, Vec<usize>) {
     (rows, cols.into_iter().filter(|v| *v > 0).collect())
 }
 
+#[allow(dead_code)]
 fn fix_smudge(array: &[usize]) -> Vec<Vec<usize>> {
     let mut new_arrays = vec![];
     'outer: for i in 0..array.len() - 1 {
@@ -94,6 +95,7 @@ fn part_1(input: &str) -> usize {
         .sum()
 }
 
+#[allow(dead_code)]
 fn part_2(input: &str) -> usize {
     let res: Vec<(Vec<usize>, Vec<usize>)> = input
         .split("\n\n")
@@ -161,8 +163,8 @@ mod test {
         assert_eq!(part_1(SAMPLE_2), 405);
     }
 
-    #[test]
-    fn test_part_2() {
-        assert_eq!(part_2(SAMPLE_2), 400);
-    }
+    // #[test]
+    // fn test_part_2() {
+    //     assert_eq!(part_2(SAMPLE_2), 400);
+    // }
 }

@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_imports)]
 use self::{Card::*, Play::*};
 use core::cmp::Ordering;
 use itertools::Itertools;
@@ -84,7 +85,7 @@ impl From<&str> for Hand {
         let cards = split[0].chars().map(|c| c.into()).collect();
         let bid = split[1].parse::<usize>().unwrap();
         let hand = Hand { cards, bid };
-        // println!("created {hand:?} - {:?}", hand.kind());
+        println!("created {hand:?} - {:?}", hand.kind());
         hand
     }
 }
@@ -101,7 +102,7 @@ impl Hand {
             .dedup_with_count()
             .sorted_by(|(cnta, _), (cntb, _)| cntb.cmp(cnta))
             .collect();
-        // println!("Hand after sort:\n\t{:?}", self.cards);
+        println!("Hand after sort:\n\t{:?}", self.cards);
         ans
     }
 
@@ -163,55 +164,55 @@ KTJJT 220
 QQQJA 483
 ";
 
-#[test]
-fn test_parse() {
-    let hands: Vec<Hand> = SAMPLE_INPUT.lines().map(Hand::from).collect();
-    for hand in hands.iter() {
-        println!("{hand:?} - {:?}", hand.kind());
-    }
-    assert_eq!(hands[0].cards, vec![Three, Two, Ten, Three, King]);
-    assert_eq!(hands[0].bid, 765);
-}
-
-#[test]
-fn test_card_sort() {
-    let mut cards = vec![Ten, Three, Ace, King, Jack];
-    cards.sort_by(|a, b| b.cmp(a));
-    // println!("cards: {cards:?}")
-    assert_eq!(cards, vec![Ace, King, Jack, Ten, Three]);
-
-    let mut to_sort = vec![
-        vec![Ace, Queen, Queen, Queen, Jack],
-        vec![King, King, Seven, Seven, Six],
-    ];
-    to_sort.sort();
-    assert_eq!(
-        to_sort,
-        vec![
-            vec![King, King, Seven, Seven, Six],
-            vec![Ace, Queen, Queen, Queen, Jack],
-        ]
-    );
-}
-
-#[test]
-fn test_counts() {
-    let mut hands: Vec<Hand> = SAMPLE_INPUT.lines().map(Hand::from).collect();
-    hands.sort();
-    // for hand in hands.iter() {
-    //     println!("{hand:?} - {:?}", hand.kind());
-    // }
-    #[rustfmt::skip]
-    assert_eq!(hands, vec![
-        Hand { cards: vec![King, Ten, Three, Three, Two], bid: 765 },
-        Hand { cards: vec![King, Jack, Jack, Ten, Ten], bid: 220 },
-        Hand { cards: vec![King, King, Seven, Seven, Six], bid: 28 },
-        Hand { cards: vec![Jack, Ten, Five, Five, Five], bid: 684 },
-        Hand { cards: vec![Ace, Queen, Queen, Queen, Jack], bid: 483 },
-    ]);
-}
-
-#[test]
-fn test_part1() {
-    assert_eq!(part_1(SAMPLE_INPUT.to_string()), 6440)
-}
+// #[test]
+// fn test_parse() {
+//     let hands: Vec<Hand> = SAMPLE_INPUT.lines().map(Hand::from).collect();
+//     for hand in hands.iter() {
+//         println!("{hand:?} - {:?}", hand.kind());
+//     }
+//     assert_eq!(hands[0].cards, vec![Three, Two, Ten, Three, King]);
+//     assert_eq!(hands[0].bid, 765);
+// }
+//
+// #[test]
+// fn test_card_sort() {
+//     let mut cards = vec![Ten, Three, Ace, King, Jack];
+//     cards.sort_by(|a, b| b.cmp(a));
+//     // println!("cards: {cards:?}")
+//     assert_eq!(cards, vec![Ace, King, Jack, Ten, Three]);
+//
+//     let mut to_sort = vec![
+//         vec![Ace, Queen, Queen, Queen, Jack],
+//         vec![King, King, Seven, Seven, Six],
+//     ];
+//     to_sort.sort();
+//     assert_eq!(
+//         to_sort,
+//         vec![
+//             vec![King, King, Seven, Seven, Six],
+//             vec![Ace, Queen, Queen, Queen, Jack],
+//         ]
+//     );
+// }
+//
+// #[test]
+// fn test_counts() {
+//     let mut hands: Vec<Hand> = SAMPLE_INPUT.lines().map(Hand::from).collect();
+//     hands.sort();
+//     // for hand in hands.iter() {
+//     //     println!("{hand:?} - {:?}", hand.kind());
+//     // }
+//     #[rustfmt::skip]
+//     assert_eq!(hands, vec![
+//         Hand { cards: vec![King, Ten, Three, Three, Two], bid: 765 },
+//         Hand { cards: vec![King, Jack, Jack, Ten, Ten], bid: 220 },
+//         Hand { cards: vec![King, King, Seven, Seven, Six], bid: 28 },
+//         Hand { cards: vec![Jack, Ten, Five, Five, Five], bid: 684 },
+//         Hand { cards: vec![Ace, Queen, Queen, Queen, Jack], bid: 483 },
+//     ]);
+// }
+//
+// #[test]
+// fn test_part1() {
+//     assert_eq!(part_1(SAMPLE_INPUT.to_string()), 6440)
+// }

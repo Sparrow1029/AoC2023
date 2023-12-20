@@ -1,7 +1,4 @@
-use rust_aoc2023::{
-    get_puzzle_input_string,
-    grid::{Grid2D, Point},
-};
+use rust_aoc2023::{get_puzzle_input_string, grid::Grid2D, point::Point};
 
 fn expand_galactic_map(grid: &Grid2D<char>, expansion_factor: i64) -> Vec<Point> {
     // get (x, y) coordinates of all galaxies

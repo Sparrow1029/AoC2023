@@ -1,8 +1,5 @@
 use colored::Colorize;
-use rust_aoc2023::{
-    get_puzzle_input_string,
-    grid::{Grid2D, Point},
-};
+use rust_aoc2023::{get_puzzle_input_string, grid::Grid2D, point::Point};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Direction {
